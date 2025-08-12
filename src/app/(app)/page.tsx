@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { isToolUIPart, getToolName } from "ai";
 import {
@@ -43,6 +43,12 @@ import {
   ToolOutput,
 } from "~/components/ai-elements/tool";
 import type { OpenAiModels } from "~/app/api/chat/route";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { InfoIcon } from "lucide-react";
 
 const models = [
   { name: "GPT-4o", value: "gpt-4o" },
@@ -108,15 +114,20 @@ export default function ChatBotDemo() {
   const isBusy = status === "submitted" || status === "streaming";
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background to-background/60">
-      <div className="mx-auto flex min-h-screen max-w-4xl flex-col gap-4 px-4 py-6">
+    <main className="relative flex-1 min-h-0 bg-background">
+      {/* Decorative gradient background */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(520px_260px_at_0%_0%,theme(colors.indigo.500)/14,transparent_60%),radial-gradient(520px_260px_at_100%_0%,theme(colors.fuchsia.500)/12,transparent_60%),radial-gradient(700px_340px_at_50%_100%,theme(colors.emerald.500)/10,transparent_65%)]"
+      />
+      <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-4 px-4 pt-6 pb-32">
         {/* Conversation */}
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation className="h-full">
             <ConversationContent className="p-4">
               {messages.length === 0 && (
-                <div className="mx-auto my-8 max-w-2xl rounded-xl bg-background p-6 text-center">
-                  <h2 className="text-lg font-semibold">
+                <div className="mx-auto my-10 max-w-2xl rounded-xl bg-background/80 p-6 text-center">
+                  <h2 className="text-xl font-semibold tracking-tight">
                     Welcome to AWS AI Chat
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -132,6 +143,9 @@ export default function ChatBotDemo() {
                         />
                       ))}
                     </Suggestions>
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground">
+                    Tip: You can switch the model and AWS stage below.
                   </div>
                 </div>
               )}
@@ -260,57 +274,74 @@ export default function ChatBotDemo() {
           </Conversation>
         </div>
 
-        {/* Input */}
-        <div className="sticky bottom-3">
-          <PromptInput onSubmit={handleSubmit} className="mt-2">
-            <PromptInputTextarea
-              onChange={(e) => setInput(e.target.value)}
-              value={input}
-              autoFocus
-            />
-            <PromptInputToolbar>
-              <PromptInputTools>
-                <PromptInputModelSelect
-                  value={model}
-                  onValueChange={(value) =>
-                    setModel(value as (typeof models)[number]["value"])
-                  }
-                >
-                  <PromptInputModelSelectTrigger>
-                    <PromptInputModelSelectValue />
-                  </PromptInputModelSelectTrigger>
-                  <PromptInputModelSelectContent>
-                    {models.map((model) => (
-                      <PromptInputModelSelectItem
-                        key={model.value}
-                        value={model.value}
-                      >
-                        {model.name}
-                      </PromptInputModelSelectItem>
-                    ))}
-                  </PromptInputModelSelectContent>
-                </PromptInputModelSelect>
-                <PromptInputModelSelect
-                  value={awsStage}
-                  onValueChange={(value) =>
-                    setAwsStage(value as (typeof awsStages)[number])
-                  }
-                >
-                  <PromptInputModelSelectTrigger>
-                    <PromptInputModelSelectValue />
-                  </PromptInputModelSelectTrigger>
-                  <PromptInputModelSelectContent>
-                    {awsStages.map((stage) => (
-                      <PromptInputModelSelectItem key={stage} value={stage}>
-                        {stage}
-                      </PromptInputModelSelectItem>
-                    ))}
-                  </PromptInputModelSelectContent>
-                </PromptInputModelSelect>
-              </PromptInputTools>
-              <PromptInputSubmit disabled={!input || isBusy} status={status} />
-            </PromptInputToolbar>
-          </PromptInput>
+        {/* Input (fixed at bottom) */}
+        <div className="fixed inset-x-0 bottom-3 z-40 pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto max-w-5xl px-4">
+            <PromptInput onSubmit={handleSubmit} className="mt-2">
+              <PromptInputTextarea
+                onChange={(e) => setInput(e.target.value)}
+                value={input}
+                autoFocus
+                placeholder="Ask anything about AWS. Press Enter to send, Shift+Enter for a new line."
+              />
+
+              <PromptInputToolbar>
+                <PromptInputTools>
+                  <PromptInputModelSelect
+                    value={model}
+                    onValueChange={(value) =>
+                      setModel(value as (typeof models)[number]["value"])
+                    }
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PromptInputModelSelectTrigger>
+                          <PromptInputModelSelectValue />
+                        </PromptInputModelSelectTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={6}>Model</TooltipContent>
+                    </Tooltip>
+                    <PromptInputModelSelectContent>
+                      {models.map((model) => (
+                        <PromptInputModelSelectItem
+                          key={model.value}
+                          value={model.value}
+                        >
+                          {model.name}
+                        </PromptInputModelSelectItem>
+                      ))}
+                    </PromptInputModelSelectContent>
+                  </PromptInputModelSelect>
+                  <PromptInputModelSelect
+                    value={awsStage}
+                    onValueChange={(value) =>
+                      setAwsStage(value as (typeof awsStages)[number])
+                    }
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PromptInputModelSelectTrigger>
+                          <PromptInputModelSelectValue />
+                        </PromptInputModelSelectTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={6}>AWS Stage</TooltipContent>
+                    </Tooltip>
+                    <PromptInputModelSelectContent>
+                      {awsStages.map((stage) => (
+                        <PromptInputModelSelectItem key={stage} value={stage}>
+                          {stage}
+                        </PromptInputModelSelectItem>
+                      ))}
+                    </PromptInputModelSelectContent>
+                  </PromptInputModelSelect>
+                </PromptInputTools>
+                <PromptInputSubmit
+                  disabled={!input || isBusy}
+                  status={status}
+                />
+              </PromptInputToolbar>
+            </PromptInput>
+          </div>
         </div>
       </div>
     </main>

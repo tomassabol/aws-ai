@@ -144,7 +144,7 @@ export async function POST(req: Request) {
   };
 
   const result = streamText({
-    model: openai(model ?? "gpt-4o"),
+    model: openai("gpt-4.1"),
     messages: convertToModelMessages(messages),
     system: [
       "You are an AWS-savvy assistant.",
@@ -155,6 +155,8 @@ export async function POST(req: Request) {
       "Use bullet lists or tables where helpful; keep output skimmable.",
     ].join("\n"),
     tools,
+    // Do not stop after the first step; allow auto-continue until the model finishes.
+    stopWhen: [],
     experimental_transform: () => {
       let emittedText = false;
       const outputs: unknown[] = [];
